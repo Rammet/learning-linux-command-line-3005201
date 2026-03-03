@@ -57,3 +57,28 @@ if [ -f ~/.dir_history ] && [ -s ~/.dir_history ]; then
     done
     unset TMOUT # Reset timeout so it doesn't affect your shell session
 fi
+
+# Function to display the directory menu
+dmenu() {
+    if [ -f ~/.dir_history ] && [ -s ~/.dir_history ]; then
+        # Map history into an array
+        mapfile -t dirs < ~/.dir_history
+        
+        # Add an option to stay/cancel
+        options=("${dirs[@]}" "Stay in current workspace")
+        
+        echo "--- Directory History ---"
+        # No timeout here so you can take your time choosing
+        PS3="Choose a directory (or 'q' to quit): "
+        select opt in "${options[@]}"; do
+            if [ -n "$opt" ] && [ "$opt" != "Stay in current workspace" ]; then
+                cd "$opt"
+                break
+            else
+                break
+            fi
+        done
+    else
+        echo "No directory history found yet!"
+    fi
+}
