@@ -21,3 +21,39 @@ if [[ ":$PATH:" != *":$(pwd)/bin:"* ]]; then
     export PATH="$PATH:$(pwd)/bin"
 fi
 ./bin/repo.sh
+cd ~/repo
+
+# Save current directory to a history file, keeping the last 5 unique paths
+save_dir_history() {
+    local hist_file="$HOME/.dir_history"
+    touch "$hist_file"
+    # Add current dir, remove duplicates, keep last 5
+    (echo "$PWD"; cat "$hist_file") | awk '!x[$0]++' | head -n 5 > "$hist_file.tmp" && mv "$hist_file.tmp" "$hist_file"
+}
+trap save_dir_history EXIT
+
+# Directory Resume Menu
+if [ -f ~/.dir_history ] && [ -s ~/.dir_history ]; then
+    echo "--- Previous Sessions ---"
+    
+    # Map history into an array
+    mapfile -t dirs < ~/.dir_history
+    
+    # Add an option to stay in current workspace
+    options=("${dirs[@]}" "Stay in current workspace")
+    
+    echo "Choose a directory to resume (or wait 10s for default):"
+    
+    # Use a timeout for the selection
+    TMOUT=10
+    select opt in "${options[@]}"; do
+        if [ -n "$opt" ] && [ "$opt" != "Stay in current workspace" ]; then
+            cd "$opt"
+            break
+        else
+            echo "Starting in workspace."
+            break
+        fi
+    done
+    unset TMOUT # Reset timeout so it doesn't affect your shell session
+fi
